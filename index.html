@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0b0d10" />
+<title>Sticker GIF Studio</title>
+<style>
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #f6f7f8;
+  background: #0b0d10;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --panel: #12161b;
+  --panel-2: #171c22;
+  --border: #28303a;
+  --muted: #93a0ae;
+  --accent: #28f05a;
+  --accent-2: #9cffb4;
+  --danger: #ff6969;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; background: radial-gradient(circle at top, #141a20 0%, #0b0d10 48%); }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+
+.app-shell { min-height: 100vh; }
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px;
+  background: rgba(11,13,16,.88); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.brand-wrap { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.logo {
+  width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center;
+  color: #061006; background: linear-gradient(135deg, var(--accent), #b7ff4d); font-weight: 900; font-size: 19px;
+  box-shadow: 0 0 34px rgba(40,240,90,.18);
+}
+.brand h1 { margin: 0; font-size: 18px; line-height: 1.1; }
+.brand p { margin: 4px 0 0; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.privacy-badge { color: var(--accent-2); border: 1px solid rgba(40,240,90,.25); background: rgba(40,240,90,.08); padding: 8px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+
+.workspace { max-width: 1440px; margin: 0 auto; padding: 18px; display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 18px; }
+.stage-card, .controls-card { background: rgba(18,22,27,.92); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 18px 55px rgba(0,0,0,.24); }
+.stage-card { min-height: calc(100vh - 104px); display: flex; flex-direction: column; overflow: hidden; }
+.stage-head { padding: 14px; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.segmented { display: inline-flex; gap: 4px; background: #0d1115; border: 1px solid var(--border); padding: 4px; border-radius: 13px; }
+.segmented button { border: 0; background: transparent; color: var(--muted); padding: 8px 11px; border-radius: 9px; font-size: 12px; font-weight: 750; }
+.segmented button.active { color: #fff; background: #202730; }
+
+.preview-zone { flex: 1; display: grid; place-items: center; padding: 24px; min-height: 520px; overflow: auto; }
+.preview-wrap {
+  position: relative; width: min(390px, 82vw); aspect-ratio: 9/16; overflow: hidden;
+  border-radius: 24px; border: 1px solid #39434d; box-shadow: 0 28px 80px rgba(0,0,0,.45);
+  background-color: #fff;
+  background-image: linear-gradient(45deg, #d7d7d7 25%, transparent 25%), linear-gradient(-45deg, #d7d7d7 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #d7d7d7 75%), linear-gradient(-45deg, transparent 75%, #d7d7d7 75%);
+  background-size: 24px 24px; background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+}
+.preview-wrap.bg-black { background: #000; }
+.preview-wrap.bg-white { background: #fff; }
+.preview-wrap.bg-red { background: #d61d2c; }
+.preview-wrap.bg-blue { background: #1763d6; }
+.preview-wrap.bg-checker { }
+.preview-wrap.zoom-2 canvas { transform: scale(2); transform-origin: center; }
+.preview-wrap.zoom-4 canvas { transform: scale(4); transform-origin: center; }
+.preview-wrap canvas { width: 100%; height: 100%; display: block; image-rendering: auto; }
+
+.drop-state { position: absolute; inset: 0; display: grid; place-items: center; padding: 30px; text-align: center; background: linear-gradient(180deg, rgba(11,13,16,.18), rgba(11,13,16,.55)); }
+.drop-state.hidden { display: none; }
+.drop-icon { width: 72px; height: 72px; margin: 0 auto 15px; border-radius: 22px; display: grid; place-items: center; font-size: 30px; background: rgba(40,240,90,.12); border: 1px solid rgba(40,240,90,.25); }
+.drop-state h2 { margin: 0 0 7px; font-size: 21px; }
+.drop-state p { margin: 0 0 16px; color: #d2d8de; font-size: 13px; line-height: 1.5; }
+
+.stage-foot { padding: 14px; border-top: 1px solid var(--border); display: grid; gap: 11px; }
+.transport { display: flex; align-items: center; gap: 10px; }
+.time { margin-left: auto; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.icon-btn, .primary-btn, .secondary-btn { border-radius: 13px; border: 1px solid var(--border); font-weight: 800; }
+.icon-btn { width: 44px; height: 42px; background: #1a2027; color: #fff; }
+.primary-btn { padding: 11px 14px; border-color: rgba(40,240,90,.25); background: var(--accent); color: #071007; }
+.secondary-btn { padding: 11px 14px; background: #1a2027; color: #fff; }
+button:disabled { cursor: not-allowed; opacity: .45; }
+.trim-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.controls-card { padding: 14px; align-self: start; position: sticky; top: 84px; max-height: calc(100vh - 102px); overflow: auto; }
+.section { padding: 14px; background: #101419; border: 1px solid #222a32; border-radius: 18px; margin-bottom: 12px; }
+.section:last-child { margin-bottom: 0; }
+.section-title { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.section-title h3 { margin: 0; font-size: 14px; }
+.section-title span { color: var(--muted); font-size: 11px; }
+.control { margin-bottom: 13px; }
+.control:last-child { margin-bottom: 0; }
+.control-head { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 7px; font-size: 12px; color: #dce1e6; }
+.control-head output { color: var(--accent-2); font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+select, input[type="number"], input[type="color"] { width: 100%; color: #fff; background: #0b0f13; border: 1px solid var(--border); border-radius: 12px; padding: 10px 11px; }
+.key-row { display: grid; grid-template-columns: 58px 1fr; gap: 9px; }
+input[type="color"] { height: 42px; padding: 4px; }
+.presets { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.small-note { color: var(--muted); font-size: 11px; line-height: 1.45; }
+.clean-preset { width: 100%; border: 1px solid rgba(40,240,90,.25); background: rgba(40,240,90,.08); color: var(--accent-2); padding: 11px; border-radius: 12px; font-weight: 850; }
+.export-grid { display: grid; gap: 8px; }
+.export-grid button { width: 100%; }
+.progress-wrap { display: none; margin-top: 10px; }
+.progress-wrap.show { display: block; }
+.progress-track { height: 8px; background: #070a0d; border-radius: 999px; overflow: hidden; border: 1px solid #202832; }
+.progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent), #b7ff4d); transition: width .15s linear; }
+.progress-label { color: var(--muted); font-size: 11px; margin-top: 7px; }
+.status { margin-top: 10px; padding: 10px 11px; border-radius: 12px; background: #0a0e12; border: 1px solid #212934; color: #cbd3db; font-size: 11px; line-height: 1.45; }
+.status.good { border-color: rgba(40,240,90,.22); color: #b9ffc8; }
+.status.warn { border-color: rgba(255,183,77,.25); color: #ffd49c; }
+.status.bad { border-color: rgba(255,105,105,.25); color: #ffb4b4; }
+
+.file-name { max-width: 210px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #cfd6dc; font-size: 12px; }
+
+@media (max-width: 980px) {
+  .workspace { grid-template-columns: 1fr; padding: 12px; }
+  .stage-card { min-height: auto; }
+  .controls-card { position: static; max-height: none; }
+  .preview-zone { min-height: 500px; padding: 18px 10px; }
+  .privacy-badge { display: none; }
+}
+
+@media (max-width: 560px) {
+  .topbar { padding: 11px 12px; }
+  .workspace { padding: 8px; gap: 10px; }
+  .stage-card, .controls-card { border-radius: 18px; }
+  .preview-zone { min-height: 480px; padding: 14px 8px; }
+  .preview-wrap { width: min(330px, 90vw); border-radius: 18px; }
+  .stage-head { padding: 10px; }
+  .controls-card { padding: 9px; }
+  .section { border-radius: 15px; padding: 12px; }
+}
+
+
+/* ---- Buyer access gate ---- */
+.locked-app { filter: blur(7px); pointer-events: none; user-select: none; max-height: 100vh; overflow: hidden; opacity: .22; }
+.access-gate { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 20px; background: radial-gradient(circle at 30% 10%, rgba(40,240,90,.12), transparent 32%), rgba(5,8,10,.94); backdrop-filter: blur(18px); }
+.access-gate.hidden { display: none; }
+.access-card { width: min(470px, 94vw); border: 1px solid #2a343d; border-radius: 28px; background: rgba(15,19,24,.97); padding: 24px; box-shadow: 0 32px 100px rgba(0,0,0,.52); }
+.access-logo { width: 64px; height: 64px; display: grid; place-items: center; border-radius: 20px; color:#061006; background: linear-gradient(135deg,#28f05a,#b7ff4d); font-weight: 950; font-size: 29px; margin-bottom: 16px; }
+.access-card h2 { margin: 0; font-size: 28px; }
+.access-card .lead { margin: 8px 0 20px; color: #a8b2bd; line-height: 1.5; }
+.access-card label { display:block; margin: 12px 0 7px; font-size: 13px; font-weight: 800; color:#dce3e9; }
+.access-card input[type=email], .access-card input[type=text] { width:100%; border-radius: 14px; border:1px solid #2d3741; background:#090d11; color:#fff; padding:13px 14px; font-size:16px; outline:none; }
+.access-card input:focus { border-color: rgba(40,240,90,.8); box-shadow: 0 0 0 3px rgba(40,240,90,.1); }
+.access-actions { display:grid; gap:10px; margin-top:16px; }
+.access-primary, .access-secondary { width:100%; border-radius:14px; border:1px solid #2b343d; padding:13px 14px; font-weight:900; }
+.access-primary { background:#28f05a; color:#061006; border-color:rgba(40,240,90,.5); }
+.access-secondary { background:#1a2027; color:#fff; }
+.access-msg { min-height: 20px; margin-top: 13px; font-size: 12px; line-height:1.5; color:#9eabb7; }
+.access-msg.good { color:#aefac0; }.access-msg.bad { color:#ffaaaa; }.access-msg.warn { color:#ffd69d; }
+.access-small { margin-top:16px; color:#7f8b97; font-size:11px; line-height:1.45; }
+.access-user { display:flex; gap:8px; align-items:center; justify-content:space-between; border:1px solid #28323b; background:#0b1015; border-radius:14px; padding:11px 12px; margin: 8px 0 12px; color:#cbd4db; font-size:12px; }
+.setup-pill { display:inline-block; margin-top:8px; padding:6px 9px; border-radius:999px; background:rgba(255,185,70,.1); border:1px solid rgba(255,185,70,.25); color:#ffd79b; font-size:11px; font-weight:800; }
+
+</style>
+</head>
+<body>
+
+<div id="accessGate" class="access-gate">
+  <div class="access-card">
+    <div class="access-logo">S</div>
+    <h2>Sticker GIF Studio Pro</h2>
+    <p class="lead">Subscribe once, then sign in with the same email you used at checkout. Your active subscription unlocks the editor on up to 2 devices.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 18px">
+      <a id="monthlySubscribe" class="access-secondary" style="text-decoration:none;text-align:center;padding:14px 10px" target="_blank" rel="noopener">
+        <strong style="display:block;font-size:17px">$3.99</strong><span style="font-size:11px;color:#9eabb7">per month</span>
+      </a>
+      <a id="yearlySubscribe" class="access-primary" style="text-decoration:none;text-align:center;padding:14px 10px" target="_blank" rel="noopener">
+        <strong style="display:block;font-size:17px">$29.99</strong><span style="font-size:11px;color:#15301c">per year • best value</span>
+      </a>
+    </div>
+
+    <div id="loginStep">
+      <label for="buyerEmail">Subscription email</label>
+      <input id="buyerEmail" type="email" autocomplete="email" placeholder="you@example.com" />
+      <div class="access-actions"><button id="magicLinkBtn" class="access-primary">Email me a sign-in link</button></div>
+    </div>
+
+    <div id="licenseStep" hidden>
+      <div class="access-user"><span id="signedInEmail">Signed in</span><button id="signOutBtn" class="access-secondary" style="width:auto;padding:7px 10px">Sign out</button></div>
+      <div class="access-actions"><button id="refreshAccessBtn" class="access-primary">I subscribed — check my access</button></div>
+      <p class="access-small" style="margin-top:10px">Use the exact same email address you entered during Stripe checkout. New subscriptions can take a few seconds to appear.</p>
+    </div>
+
+    <div id="accessMessage" class="access-msg"></div>
+    <div id="setupNotice" class="access-small" hidden>
+      This secured build needs your Supabase project URL and public key before subscriber login can work.
+      <div class="setup-pill">Owner setup required</div>
+    </div>
+    <p class="access-small">Sharing this app link does not share access. The editor checks the subscriber's verified email, active billing status, and device allowance.</p>
+  </div>
+</div>
+
+<div id="app" class="locked-app" aria-hidden="true"></div>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { GIFEncoder, quantize, applyPalette } from 'https://cdn.jsdelivr.net/npm/gifenc@1.0.3/+esm';
+import JSZip from 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm';
+
+const app = document.querySelector('#app');
+
+
+// Buyer access configuration. Replace these two values after creating the Supabase backend.
+const SUPABASE_URL = 'https://sftkodqfuqwqqgosvhoy.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_3KwSAnp7OkguKeQMD4KHHw_JnW8ANaj';
+const ACCESS_CONFIGURED = !SUPABASE_URL.startsWith('YOUR_') && !SUPABASE_ANON_KEY.startsWith('YOUR_');
+const MONTHLY_SUBSCRIBE_URL = 'https://buy.stripe.com/fZu00j8HpgID5wgfMy1ck00';
+const YEARLY_SUBSCRIBE_URL = 'https://buy.stripe.com/14AdR94r98c79MwgQC1ck01';
+
+const accessGate = document.querySelector('#accessGate');
+const loginStep = document.querySelector('#loginStep');
+const licenseStep = document.querySelector('#licenseStep');
+const buyerEmail = document.querySelector('#buyerEmail');
+const magicLinkBtn = document.querySelector('#magicLinkBtn');
+const signOutBtn = document.querySelector('#signOutBtn');
+const refreshAccessBtn = document.querySelector('#refreshAccessBtn');
+const monthlySubscribe = document.querySelector('#monthlySubscribe');
+const yearlySubscribe = document.querySelector('#yearlySubscribe');
+const signedInEmail = document.querySelector('#signedInEmail');
+const accessMessage = document.querySelector('#accessMessage');
+const setupNotice = document.querySelector('#setupNotice');
+let supabase = null;
+
+function accessMsg(text, kind='') { accessMessage.className = `access-msg ${kind}`; accessMessage.textContent = text || ''; }
+function getDeviceId() {
+  let id = localStorage.getItem('sgs_device_id');
+  if (!id) { id = (crypto.randomUUID ? crypto.randomUUID() : `device_${Date.now()}_${Math.random().toString(36).slice(2)}`); localStorage.setItem('sgs_device_id', id); }
+  return id;
+}
+function getDeviceName() {
+  const ua = navigator.userAgent;
+  if (/iPhone/i.test(ua)) return 'iPhone';
+  if (/iPad/i.test(ua)) return 'iPad';
+  if (/Android/i.test(ua)) return 'Android device';
+  if (/Mac/i.test(ua)) return 'Mac';
+  if (/Windows/i.test(ua)) return 'Windows PC';
+  return 'Web browser';
+}
+function unlockApp() {
+  accessGate.classList.add('hidden');
+  app.classList.remove('locked-app');
+  app.removeAttribute('aria-hidden');
+}
+async function checkBuyerAccess() {
+  if (!supabase) return false;
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { loginStep.hidden = false; licenseStep.hidden = true; return false; }
+  signedInEmail.textContent = session.user.email || 'Signed in';
+  loginStep.hidden = true; licenseStep.hidden = false;
+  const { data, error } = await supabase.rpc('check_sticker_access', { p_device_id: getDeviceId(), p_device_name: getDeviceName() });
+  if (!error && data?.ok) { unlockApp(); return true; }
+  accessMsg(data?.message || 'No active subscription was found for this email yet. Subscribe above, then check again.', 'warn');
+  return false;
+}
+
+monthlySubscribe.href = MONTHLY_SUBSCRIBE_URL;
+yearlySubscribe.href = YEARLY_SUBSCRIBE_URL;
+
+if (!ACCESS_CONFIGURED) {
+  setupNotice.hidden = false;
+  accessMsg('This copy is ready for buyer access, but the owner still needs to connect the secure backend.', 'warn');
+  magicLinkBtn.disabled = true;
+} else {
+  supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+  magicLinkBtn.addEventListener('click', async () => {
+    const email = buyerEmail.value.trim();
+    if (!email) return accessMsg('Enter the email used for your purchase.', 'bad');
+    magicLinkBtn.disabled = true; accessMsg('Sending secure sign-in link…');
+    const redirectTo = location.origin + location.pathname;
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo, shouldCreateUser: true } });
+    magicLinkBtn.disabled = false;
+    if (error) return accessMsg(error.message, 'bad');
+    accessMsg('Check your email and tap the sign-in link. Then return here.', 'good');
+  });
+  refreshAccessBtn.addEventListener('click', async () => {
+    refreshAccessBtn.disabled = true; accessMsg('Checking your subscription…');
+    await checkBuyerAccess();
+    refreshAccessBtn.disabled = false;
+  });
+  signOutBtn.addEventListener('click', async () => { await supabase.auth.signOut(); location.reload(); });
+  supabase.auth.onAuthStateChange(() => { setTimeout(checkBuyerAccess, 0); });
+  await checkBuyerAccess();
+}
+
+app.innerHTML = `
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-wrap">
+        <div class="logo">S</div>
+        <div class="brand">
+          <h1>Sticker GIF Studio</h1>
+          <p>Clean green-screen video → transparent animated sticker</p>
+        </div>
+      </div>
+      <div class="privacy-badge">● Processed on your device</div>
+    </header>
+
+    <main class="workspace">
+      <section class="stage-card">
+        <div class="stage-head">
+          <div class="segmented" id="viewMode">
+            <button class="active" data-mode="after">After</button>
+            <button data-mode="before">Before</button>
+          </div>
+          <div class="segmented" id="bgMode">
+            <button class="active" data-bg="checker">Checker</button>
+            <button data-bg="black">Black</button>
+            <button data-bg="white">White</button>
+            <button data-bg="red">Red</button>
+            <button data-bg="blue">Blue</button>
+          </div>
+        </div>
+
+        <div class="preview-zone">
+          <div class="preview-wrap bg-checker" id="previewWrap">
+            <canvas id="previewCanvas" width="360" height="640"></canvas>
+            <div class="drop-state" id="dropState">
+              <div>
+                <div class="drop-icon">✦</div>
+                <h2>Drop in a green-screen video</h2>
+                <p>MP4, MOV, or WebM. Best results come from an evenly lit solid green background and clear gaps around hands/arms.</p>
+                <button class="primary-btn" id="chooseBtn">Choose video</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-foot">
+          <div class="transport">
+            <button class="icon-btn" id="playBtn" disabled>▶</button>
+            <button class="secondary-btn" id="eyeDropBtn" disabled>Eyedropper</button>
+            <div class="file-name" id="fileName">No video loaded</div>
+            <div class="time" id="timeLabel">00:00 / 00:00</div>
+          </div>
+          <div class="trim-row">
+            <div>
+              <div class="control-head"><span>Trim start</span><output id="trimStartOut">0.00s</output></div>
+              <input type="range" id="trimStart" min="0" max="1" step="0.01" value="0" disabled />
+            </div>
+            <div>
+              <div class="control-head"><span>Trim end</span><output id="trimEndOut">0.00s</output></div>
+              <input type="range" id="trimEnd" min="0" max="1" step="0.01" value="1" disabled />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="controls-card">
+        <section class="section">
+          <div class="section-title"><h3>1. Source</h3><span>local only</span></div>
+          <input id="fileInput" type="file" accept="video/mp4,video/quicktime,video/webm,video/*" hidden />
+          <button class="secondary-btn" id="uploadBtn" style="width:100%">Upload video</button>
+          <p class="small-note">Nothing is uploaded for processing. Your browser handles the frames locally.</p>
+        </section>
+
+        <section class="section">
+          <div class="section-title"><h3>2. Chroma key</h3><span>edge cleanup</span></div>
+          <button class="clean-preset" id="cleanPreset">✨ Apply Clean Edge preset</button>
+          <div class="control" style="margin-top:12px">
+            <div class="control-head"><span>Key color</span><span id="keyHex">#00FF00</span></div>
+            <div class="key-row">
+              <input type="color" id="keyColor" value="#00ff00" />
+              <button class="secondary-btn" id="sampleGreenBtn">Sample center green</button>
+            </div>
+          </div>
+          <div class="control">
+            <div class="control-head"><span>Tolerance</span><output id="tolOut">110</output></div>
+            <input type="range" id="tolerance" min="10" max="260" value="110" />
+          </div>
+          <div class="control">
+            <div class="control-head"><span>Key softness</span><output id="softOut">30</output></div>
+            <input type="range" id="softness" min="0" max="100" value="30" />
+          </div>
+          <div class="control">
+            <div class="control-head"><span>Matte contract / choke</span><output id="chokeOut">2px</output></div>
+            <input type="range" id="choke" min="0" max="5" value="2" />
+          </div>
+          <div class="control">
+            <div class="control-head"><span>Edge feather</span><output id="featherOut">0px</output></div>
+            <input type="range" id="feather" min="0" max="3" value="0" />
+          </div>
+          <div class="control">
+            <div class="control-head"><span>Green spill suppression</span><output id="spillOut">100%</output></div>
+            <input type="range" id="spill" min="0" max="100" value="100" />
+          </div>
+          <div class="control">
+            <div class="control-head"><span>GIF alpha threshold</span><output id="alphaOut">150</output></div>
+            <input type="range" id="alphaThreshold" min="1" max="254" value="150" />
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-title"><h3>3. Preview</h3><span>inspect edges</span></div>
+          <div class="presets">
+            <button class="secondary-btn zoom-btn" data-zoom="1">1×</button>
+            <button class="secondary-btn zoom-btn" data-zoom="2">2×</button>
+            <button class="secondary-btn zoom-btn" data-zoom="4">4×</button>
+            <button class="secondary-btn" id="giphyCheck">Check edges</button>
+          </div>
+          <div class="status" id="qualityStatus">Load a clip, then use <b>Check edges</b> over black and white backgrounds to spot halos.</div>
+        </section>
+
+        <section class="section">
+          <div class="section-title"><h3>4. Output</h3><span>loop forever</span></div>
+          <div class="control">
+            <div class="control-head"><span>Size</span></div>
+            <select id="sizePreset">
+              <option value="540x960">GIPHY optimized — 540×960</option>
+              <option value="1080x1920" selected>HD vertical — 1080×1920</option>
+              <option value="1080x1080">Square — 1080×1080</option>
+              <option value="source">Source dimensions</option>
+            </select>
+          </div>
+          <div class="control">
+            <div class="control-head"><span>Frames per second</span></div>
+            <select id="fps">
+              <option>10</option><option selected>12</option><option>15</option><option>20</option><option>24</option>
+            </select>
+          </div>
+          <p class="small-note">1080×1920 GIFs can be very large and slower to encode on iPhone. 540×960 is usually much easier to upload while keeping the same 9:16 framing.</p>
+          <div class="export-grid">
+            <button class="primary-btn" id="exportGif" disabled>Export transparent GIF</button>
+            <button class="secondary-btn" id="exportPngZip" disabled>Export transparent PNG frames (.zip)</button>
+          </div>
+          <div class="progress-wrap" id="progressWrap">
+            <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+            <div class="progress-label" id="progressLabel">Preparing…</div>
+          </div>
+        </section>
+      </aside>
+    </main>
+  </div>
+  <video id="video" playsinline muted preload="auto" style="display:none"></video>
+  <canvas id="sourceCanvas" style="display:none"></canvas>
+  <canvas id="workCanvas" style="display:none"></canvas>
+`;
+
+const $ = (s) => document.querySelector(s);
+const video = $('#video');
+const previewCanvas = $('#previewCanvas');
+const previewCtx = previewCanvas.getContext('2d', { willReadFrequently: true });
+const sourceCanvas = $('#sourceCanvas');
+const sourceCtx = sourceCanvas.getContext('2d', { willReadFrequently: true });
+const workCanvas = $('#workCanvas');
+const workCtx = workCanvas.getContext('2d', { willReadFrequently: true });
+const previewWrap = $('#previewWrap');
+const fileInput = $('#fileInput');
+const dropState = $('#dropState');
+const playBtn = $('#playBtn');
+const fileName = $('#fileName');
+const timeLabel = $('#timeLabel');
+const trimStart = $('#trimStart');
+const trimEnd = $('#trimEnd');
+const trimStartOut = $('#trimStartOut');
+const trimEndOut = $('#trimEndOut');
+const exportGifBtn = $('#exportGif');
+const exportPngZipBtn = $('#exportPngZip');
+const progressWrap = $('#progressWrap');
+const progressBar = $('#progressBar');
+const progressLabel = $('#progressLabel');
+const qualityStatus = $('#qualityStatus');
+
+let objectUrl = null;
+let loadedFile = null;
+let viewMode = 'after';
+let bgMode = 'checker';
+let eyedropper = false;
+let raf = 0;
+let isExporting = false;
+
+const settings = {
+  key: [0,255,0], tolerance: 110, softness: 30, choke: 2, feather: 0, spill: 1, alphaThreshold: 150,
+};
+
+function setProgress(show, pct = 0, label = '') {
+  progressWrap.classList.toggle('show', show);
+  progressBar.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+  progressLabel.textContent = label;
+}
+
+function fmtTime(t) {
+  if (!Number.isFinite(t)) return '00:00';
+  const m = Math.floor(t / 60);
+  const s = Math.floor(t % 60);
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function hexToRgb(hex) {
+  const h = hex.replace('#','');
+  return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+}
+function rgbToHex([r,g,b]) { return `#${[r,g,b].map(v => Math.round(v).toString(16).padStart(2,'0')).join('').toUpperCase()}`; }
+
+function outputSize() {
+  const v = $('#sizePreset').value;
+  if (v === 'source') return { w: video.videoWidth || 1080, h: video.videoHeight || 1920 };
+  const [w,h] = v.split('x').map(Number);
+  return {w,h};
+}
+
+function updatePreviewShape() {
+  const {w,h} = outputSize();
+  const baseW = 360;
+  previewCanvas.width = baseW;
+  previewCanvas.height = Math.round(baseW * h / w);
+  previewWrap.style.aspectRatio = `${w}/${h}`;
+  renderPreviewFrame();
+}
+
+function drawContain(ctx, media, width, height) {
+  ctx.clearRect(0,0,width,height);
+  const sw = media.videoWidth || width;
+  const sh = media.videoHeight || height;
+  const scale = Math.min(width/sw, height/sh);
+  const dw = sw * scale, dh = sh * scale;
+  const dx = (width - dw)/2, dy = (height - dh)/2;
+  ctx.drawImage(media, dx, dy, dw, dh);
+}
+
+function erodeAlpha(data, w, h, radius) {
+  if (radius <= 0) return;
+  let src = new Uint8ClampedArray(w*h);
+  let dst = new Uint8ClampedArray(w*h);
+  for (let i=0,p=0;i<data.length;i+=4,p++) src[p] = data[i+3];
+  for (let iter=0; iter<radius; iter++) {
+    for (let y=0;y<h;y++) {
+      for (let x=0;x<w;x++) {
+        const p = y*w+x;
+        let m = src[p];
+        if (x>0) m = Math.min(m, src[p-1]);
+        if (x<w-1) m = Math.min(m, src[p+1]);
+        if (y>0) m = Math.min(m, src[p-w]);
+        if (y<h-1) m = Math.min(m, src[p+w]);
+        dst[p] = m;
+      }
+    }
+    [src,dst] = [dst,src];
+  }
+  for (let i=0,p=0;i<data.length;i+=4,p++) data[i+3] = src[p];
+}
+
+function featherAlpha(data, w, h, radius) {
+  if (radius <= 0) return;
+  const src = new Uint8ClampedArray(w*h);
+  const dst = new Uint8ClampedArray(w*h);
+  for (let i=0,p=0;i<data.length;i+=4,p++) src[p] = data[i+3];
+  const rr = radius;
+  for (let y=0;y<h;y++) {
+    for (let x=0;x<w;x++) {
+      let sum=0,count=0;
+      for (let yy=Math.max(0,y-rr); yy<=Math.min(h-1,y+rr); yy++) {
+        for (let xx=Math.max(0,x-rr); xx<=Math.min(w-1,x+rr); xx++) {
+          sum += src[yy*w+xx]; count++;
+        }
+      }
+      dst[y*w+x] = sum/count;
+    }
+  }
+  for (let i=0,p=0;i<data.length;i+=4,p++) data[i+3] = dst[p];
+}
+
+function chromaKey(imageData, w, h, scaledChoke = settings.choke, scaledFeather = settings.feather) {
+  const d = imageData.data;
+  const [kr,kg,kb] = settings.key;
+  const tol = settings.tolerance;
+  const soft = Math.max(1, settings.softness);
+  const spill = settings.spill;
+
+  for (let i=0;i<d.length;i+=4) {
+    const r=d[i], g=d[i+1], b=d[i+2];
+    const dr=r-kr, dg=g-kg, db=b-kb;
+    const dist=Math.sqrt(dr*dr+dg*dg+db*db);
+    let a=255;
+    if (dist <= tol) a=0;
+    else if (dist < tol+soft) a = Math.round(255*((dist-tol)/soft));
+
+    // Extra protection for green-dominant spill near the keyed color.
+    const maxRB = Math.max(r,b);
+    const dominance = Math.max(0, g-maxRB);
+    if (dominance > 0 && spill > 0) {
+      const edgeBoost = 0.35 + 0.65*(1-a/255);
+      d[i+1] = Math.max(maxRB, Math.round(g - dominance*spill*edgeBoost));
+    }
+    d[i+3] = Math.min(d[i+3], a);
+  }
+
+  erodeAlpha(d, w, h, Math.max(0, Math.round(scaledChoke)));
+  featherAlpha(d, w, h, Math.max(0, Math.round(scaledFeather)));
+  return imageData;
+}
+
+function processCurrentToCanvas(targetCanvas, targetCtx, w, h) {
+  sourceCanvas.width = w; sourceCanvas.height = h;
+  drawContain(sourceCtx, video, w, h);
+  const source = sourceCtx.getImageData(0,0,w,h);
+  if (viewMode === 'before') {
+    targetCanvas.width=w; targetCanvas.height=h;
+    targetCtx.putImageData(source,0,0);
+    return source;
+  }
+  const out = chromaKey(source, w, h, settings.choke, settings.feather);
+  targetCanvas.width=w; targetCanvas.height=h;
+  targetCtx.putImageData(out,0,0);
+  return out;
+}
+
+function renderPreviewFrame() {
+  if (!video.videoWidth) return;
+  const w = previewCanvas.width, h = previewCanvas.height;
+  sourceCanvas.width = w; sourceCanvas.height = h;
+  drawContain(sourceCtx, video, w, h);
+  const source = sourceCtx.getImageData(0,0,w,h);
+  if (viewMode === 'before') {
+    previewCtx.putImageData(source,0,0);
+    return;
+  }
+  // Preview choke is scaled so 1-2 px still looks representative.
+  const {w:ow} = outputSize();
+  const chokePreview = settings.choke * (w / ow);
+  const featherPreview = settings.feather * (w / ow);
+  const out = chromaKey(source,w,h,chokePreview,featherPreview);
+  previewCtx.clearRect(0,0,w,h);
+  previewCtx.putImageData(out,0,0);
+}
+
+function animationLoop() {
+  if (video.videoWidth) {
+    const start = Number(trimStart.value || 0);
+    const end = Number(trimEnd.value || video.duration || 0);
+    if (!video.paused && video.currentTime >= end) video.currentTime = start;
+    renderPreviewFrame();
+    timeLabel.textContent = `${fmtTime(video.currentTime)} / ${fmtTime(video.duration)}`;
+  }
+  raf = requestAnimationFrame(animationLoop);
+}
+raf = requestAnimationFrame(animationLoop);
+
+async function loadFile(file) {
+  if (!file) return;
+  if (objectUrl) URL.revokeObjectURL(objectUrl);
+  objectUrl = URL.createObjectURL(file);
+  loadedFile = file;
+  video.src = objectUrl;
+  fileName.textContent = file.name;
+  await new Promise((resolve,reject) => {
+    video.onloadedmetadata = resolve;
+    video.onerror = reject;
+  }).catch(() => null);
+  if (!video.videoWidth) {
+    qualityStatus.className='status bad';
+    qualityStatus.textContent='This browser could not decode the video. Try exporting the source as an H.264 MP4 and upload again.';
+    return;
+  }
+  const dur = video.duration || 0;
+  trimStart.max = dur; trimEnd.max = dur;
+  trimStart.value = 0; trimEnd.value = dur;
+  trimStart.disabled = trimEnd.disabled = false;
+  trimStartOut.textContent='0.00s'; trimEndOut.textContent=`${dur.toFixed(2)}s`;
+  playBtn.disabled=false; $('#eyeDropBtn').disabled=false;
+  exportGifBtn.disabled=false; exportPngZipBtn.disabled=false;
+  dropState.classList.add('hidden');
+  updatePreviewShape();
+  video.currentTime = Math.min(.05, dur);
+  qualityStatus.className='status good';
+  qualityStatus.textContent='Video loaded. Use the eyedropper on the preview if your green is not pure #00FF00, then test edges over black and white.';
+}
+
+$('#chooseBtn').onclick = () => fileInput.click();
+$('#uploadBtn').onclick = () => fileInput.click();
+fileInput.onchange = (e) => loadFile(e.target.files?.[0]);
+
+previewWrap.addEventListener('dragover', e => { e.preventDefault(); });
+previewWrap.addEventListener('drop', e => { e.preventDefault(); loadFile(e.dataTransfer.files?.[0]); });
+
+playBtn.onclick = async () => {
+  if (video.paused) {
+    if (video.currentTime < Number(trimStart.value) || video.currentTime >= Number(trimEnd.value)) video.currentTime=Number(trimStart.value);
+    await video.play(); playBtn.textContent='❚❚';
+  } else { video.pause(); playBtn.textContent='▶'; }
+};
+video.onpause = () => playBtn.textContent='▶';
+video.onplay = () => playBtn.textContent='❚❚';
+
+trimStart.oninput = () => {
+  if (Number(trimStart.value) >= Number(trimEnd.value)-.05) trimStart.value = Math.max(0, Number(trimEnd.value)-.05);
+  trimStartOut.textContent=`${Number(trimStart.value).toFixed(2)}s`;
+  video.currentTime = Number(trimStart.value);
+};
+trimEnd.oninput = () => {
+  if (Number(trimEnd.value) <= Number(trimStart.value)+.05) trimEnd.value = Math.min(video.duration, Number(trimStart.value)+.05);
+  trimEndOut.textContent=`${Number(trimEnd.value).toFixed(2)}s`;
+  video.currentTime = Math.max(Number(trimStart.value), Number(trimEnd.value)-.03);
+};
+
+$('#viewMode').addEventListener('click', e => {
+  const b=e.target.closest('button'); if(!b) return;
+  [...$('#viewMode').querySelectorAll('button')].forEach(x=>x.classList.remove('active')); b.classList.add('active');
+  viewMode=b.dataset.mode; renderPreviewFrame();
+});
+$('#bgMode').addEventListener('click', e => {
+  const b=e.target.closest('button'); if(!b) return;
+  [...$('#bgMode').querySelectorAll('button')].forEach(x=>x.classList.remove('active')); b.classList.add('active');
+  bgMode=b.dataset.bg; previewWrap.className=`preview-wrap bg-${bgMode}`;
+});
+
+$('.controls-card').addEventListener('input', e => {
+  const id=e.target.id;
+  if(id==='tolerance') { settings.tolerance=Number(e.target.value); $('#tolOut').textContent=e.target.value; }
+  if(id==='softness') { settings.softness=Number(e.target.value); $('#softOut').textContent=e.target.value; }
+  if(id==='choke') { settings.choke=Number(e.target.value); $('#chokeOut').textContent=`${e.target.value}px`; }
+  if(id==='feather') { settings.feather=Number(e.target.value); $('#featherOut').textContent=`${e.target.value}px`; }
+  if(id==='spill') { settings.spill=Number(e.target.value)/100; $('#spillOut').textContent=`${e.target.value}%`; }
+  if(id==='alphaThreshold') { settings.alphaThreshold=Number(e.target.value); $('#alphaOut').textContent=e.target.value; }
+  if(id==='keyColor') { settings.key=hexToRgb(e.target.value); $('#keyHex').textContent=rgbToHex(settings.key); }
+  if(id==='sizePreset') updatePreviewShape();
+  renderPreviewFrame();
+});
+
+$('#cleanPreset').onclick = () => {
+  const values = {tolerance:110, softness:30, choke:2, feather:0, spill:100, alphaThreshold:150};
+  for (const [id,v] of Object.entries(values)) { const el=$(`#${id}`); el.value=v; el.dispatchEvent(new Event('input',{bubbles:true})); }
+  qualityStatus.className='status good'; qualityStatus.textContent='Clean Edge preset applied: moderate tolerance, 2 px matte contraction, no blur, full green spill suppression.';
+};
+
+$('#eyeDropBtn').onclick = () => {
+  eyedropper=!eyedropper;
+  $('#eyeDropBtn').textContent = eyedropper ? 'Tap the green…' : 'Eyedropper';
+  $('#eyeDropBtn').style.borderColor = eyedropper ? 'rgba(40,240,90,.65)' : '';
+};
+previewCanvas.addEventListener('click', e => {
+  if(!eyedropper || !video.videoWidth) return;
+  const rect=previewCanvas.getBoundingClientRect();
+  const x=Math.max(0,Math.min(previewCanvas.width-1,Math.floor((e.clientX-rect.left)/rect.width*previewCanvas.width)));
+  const y=Math.max(0,Math.min(previewCanvas.height-1,Math.floor((e.clientY-rect.top)/rect.height*previewCanvas.height)));
+  sourceCanvas.width=previewCanvas.width; sourceCanvas.height=previewCanvas.height; drawContain(sourceCtx,video,sourceCanvas.width,sourceCanvas.height);
+  const px=sourceCtx.getImageData(x,y,1,1).data;
+  settings.key=[px[0],px[1],px[2]];
+  $('#keyColor').value=rgbToHex(settings.key); $('#keyHex').textContent=rgbToHex(settings.key);
+  eyedropper=false; $('#eyeDropBtn').textContent='Eyedropper'; $('#eyeDropBtn').style.borderColor=''; renderPreviewFrame();
+});
+
+$('#sampleGreenBtn').onclick = () => {
+  if(!video.videoWidth) return;
+  sourceCanvas.width=previewCanvas.width; sourceCanvas.height=previewCanvas.height; drawContain(sourceCtx,video,sourceCanvas.width,sourceCanvas.height);
+  const x=Math.floor(sourceCanvas.width*.5), y=Math.floor(sourceCanvas.height*.08);
+  const px=sourceCtx.getImageData(x,y,1,1).data;
+  settings.key=[px[0],px[1],px[2]]; $('#keyColor').value=rgbToHex(settings.key); $('#keyHex').textContent=rgbToHex(settings.key); renderPreviewFrame();
+};
+
+$('.presets').addEventListener('click', e => {
+  const z=e.target.closest('.zoom-btn'); if(!z) return;
+  previewWrap.classList.remove('zoom-2','zoom-4');
+  if(z.dataset.zoom==='2') previewWrap.classList.add('zoom-2');
+  if(z.dataset.zoom==='4') previewWrap.classList.add('zoom-4');
+});
+
+function inspectEdges() {
+  if(!video.videoWidth) return;
+  const w=previewCanvas.width,h=previewCanvas.height;
+  sourceCanvas.width=w;sourceCanvas.height=h;drawContain(sourceCtx,video,w,h);
+  const img=chromaKey(sourceCtx.getImageData(0,0,w,h),w,h,Math.max(1,settings.choke*(w/outputSize().w)),0);
+  const d=img.data;
+  let transparent=0, greenHalo=0, whiteHalo=0, boundary=0;
+  const isTrans=(p)=>d[p+3] < settings.alphaThreshold;
+  for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++) {
+    const p=(y*w+x)*4;
+    if(isTrans(p)){ transparent++; continue; }
+    const neighborTrans=isTrans(p-4)||isTrans(p+4)||isTrans(p-w*4)||isTrans(p+w*4);
+    if(neighborTrans){
+      boundary++;
+      const r=d[p],g=d[p+1],b=d[p+2];
+      if(g>r+22 && g>b+22) greenHalo++;
+      if(r>232 && g>232 && b>232) whiteHalo++;
+    }
+  }
+  const total=w*h; const tp=transparent/total*100;
+  const gp=boundary?greenHalo/boundary*100:0; const wp=boundary?whiteHalo/boundary*100:0;
+  if(tp < 5) { qualityStatus.className='status bad'; qualityStatus.textContent=`Only ${tp.toFixed(1)}% of this frame is transparent. Increase tolerance or resample the green background.`; }
+  else if(gp>8 || wp>8) { qualityStatus.className='status warn'; qualityStatus.textContent=`Transparency: ${tp.toFixed(1)}%. Edge warning — green halo ${gp.toFixed(1)}%, white halo ${wp.toFixed(1)}%. Try +1 px choke, more spill suppression, or a slightly higher tolerance.`; }
+  else { qualityStatus.className='status good'; qualityStatus.textContent=`Looks clean on this frame. Transparency: ${tp.toFixed(1)}%. Green halo ${gp.toFixed(1)}%, white halo ${wp.toFixed(1)}%. Check a few different frames before export.`; }
+}
+$('#giphyCheck').onclick=inspectEdges;
+
+function seekTo(t) {
+  return new Promise((resolve,reject) => {
+    if (Math.abs(video.currentTime-t) < 0.002) return resolve();
+    const done=()=>{ cleanup(); resolve(); };
+    const fail=()=>{ cleanup(); reject(new Error('Could not seek video')); };
+    const cleanup=()=>{ video.removeEventListener('seeked',done); video.removeEventListener('error',fail); };
+    video.addEventListener('seeked',done,{once:true}); video.addEventListener('error',fail,{once:true}); video.currentTime=Math.min(Math.max(0,t),Math.max(0,video.duration-.001));
+  });
+}
+
+async function processedFrameAt(t,w,h) {
+  await seekTo(t);
+  workCanvas.width=w;workCanvas.height=h;
+  drawContain(workCtx,video,w,h);
+  const img=workCtx.getImageData(0,0,w,h);
+  return chromaKey(img,w,h,settings.choke,settings.feather);
+}
+
+function downloadBlob(blob,name) {
+  const a=document.createElement('a'); const url=URL.createObjectURL(blob); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),4000);
+}
+
+async function exportGif() {
+  if(isExporting || !video.videoWidth) return;
+  isExporting=true; video.pause();
+  exportGifBtn.disabled=exportPngZipBtn.disabled=true;
+  try {
+    const {w,h}=outputSize(); const fps=Number($('#fps').value); const start=Number(trimStart.value), end=Number(trimEnd.value);
+    const duration=Math.max(.05,end-start); const frames=Math.min(300,Math.max(1,Math.ceil(duration*fps))); const delay=Math.max(20,Math.round(1000/fps));
+    setProgress(true,1,`Encoding ${frames} frames at ${w}×${h}…`);
+    const gif=GIFEncoder({ initialCapacity: 1024*1024 });
+    for(let f=0;f<frames;f++) {
+      const t=start + Math.min(duration-.001, f/fps);
+      const img=await processedFrameAt(t,w,h);
+      // Guarantee binary alpha before GIF quantization.
+      for(let i=3;i<img.data.length;i+=4) img.data[i]=img.data[i] < settings.alphaThreshold ? 0 : 255;
+      const palette=quantize(img.data,256,{format:'rgba4444',oneBitAlpha:settings.alphaThreshold,clearAlpha:true,clearAlphaThreshold:settings.alphaThreshold});
+      const index=applyPalette(img.data,palette,'rgba4444');
+      let transparentIndex=palette.findIndex(c => (c[3] ?? 255)===0);
+      if(transparentIndex<0) transparentIndex=0;
+      gif.writeFrame(index,w,h,{palette,transparent:true,transparentIndex,delay,repeat:0,dispose:2});
+      setProgress(true,Math.round((f+1)/frames*96),`Frame ${f+1} of ${frames}`);
+      await new Promise(r=>setTimeout(r,0));
+    }
+    gif.finish();
+    const bytes=gif.bytes(); const blob=new Blob([bytes],{type:'image/gif'});
+    setProgress(true,100,`Done — ${(blob.size/1024/1024).toFixed(1)} MB`);
+    downloadBlob(blob,'sticker-transparent.gif');
+  } catch(err) {
+    qualityStatus.className='status bad'; qualityStatus.textContent=`GIF export failed: ${err.message}. Try the 540×960 preset or a shorter clip.`;
+  } finally {
+    isExporting=false; exportGifBtn.disabled=exportPngZipBtn.disabled=false; setTimeout(()=>setProgress(false),1800);
+  }
+}
+
+async function exportPngZip() {
+  if(isExporting || !video.videoWidth) return;
+  isExporting=true; video.pause(); exportGifBtn.disabled=exportPngZipBtn.disabled=true;
+  try {
+    const {w,h}=outputSize(); const fps=Number($('#fps').value); const start=Number(trimStart.value), end=Number(trimEnd.value);
+    const duration=Math.max(.05,end-start); const frames=Math.min(240,Math.max(1,Math.ceil(duration*fps)));
+    const zip=new JSZip(); setProgress(true,1,`Rendering ${frames} transparent PNG frames…`);
+    for(let f=0;f<frames;f++) {
+      const t=start + Math.min(duration-.001,f/fps); const img=await processedFrameAt(t,w,h);
+      workCanvas.width=w; workCanvas.height=h; workCtx.clearRect(0,0,w,h); workCtx.putImageData(img,0,0);
+      const blob=await new Promise(resolve=>workCanvas.toBlob(resolve,'image/png'));
+      zip.file(`frame_${String(f+1).padStart(4,'0')}.png`,blob);
+      setProgress(true,Math.round((f+1)/frames*88),`PNG ${f+1} of ${frames}`);
+      await new Promise(r=>setTimeout(r,0));
+    }
+    setProgress(true,92,'Compressing ZIP…');
+    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}},meta=>setProgress(true,92+meta.percent*.08,`Compressing ${meta.percent.toFixed(0)}%`));
+    setProgress(true,100,`Done — ${(blob.size/1024/1024).toFixed(1)} MB`); downloadBlob(blob,'sticker-png-frames.zip');
+  } catch(err) {
+    qualityStatus.className='status bad'; qualityStatus.textContent=`PNG export failed: ${err.message}`;
+  } finally {
+    isExporting=false; exportGifBtn.disabled=exportPngZipBtn.disabled=false; setTimeout(()=>setProgress(false),1800);
+  }
+}
+
+exportGifBtn.onclick=exportGif;
+exportPngZipBtn.onclick=exportPngZip;
+
+window.addEventListener('beforeunload',()=>{ if(objectUrl) URL.revokeObjectURL(objectUrl); cancelAnimationFrame(raf); });
+
+</script>
+</body>
+</html>
