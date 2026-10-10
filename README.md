@@ -1,18 +1,10 @@
-# Sticker GIF Studio
+# Creative Studio
 
-Turn a green-screen video into a transparent animated GIF sticker, entirely in your browser (nothing is uploaded).
+Live: https://gusthecreative-ops.github.io/sticker-gif-studio/
 
-**Live app:** https://gusthecreative-ops.github.io/sticker-gif-studio/
+Make transparent animated GIF stickers right in your browser. Everything is processed on your device.
 
-- Auto-detects the green, keys it out cleanly (white/grey/black subjects stay solid), removes green spill
-- Trim with a timeline, preview over checker/black/white/colour or your own image
-- Export a transparent GIF (or bake in a background image), or a ZIP of PNG frames
-- Works on iPhone Safari: open the link, tap the Source tool and choose a video. After exporting, use **Save / Share… → Save to Files** to keep transparency.
-
-`index.html` is a single self-contained file (built with Vite + vite-plugin-singlefile; uses gifenc and jszip).
-
-## Features (latest)
-- In-app expanded preview with always-visible close button (iOS-safe)
-- Save to Photos / Copy / Save to Files / Share result card
-- GIF quality: Standard / High / Max with optional dithering (opaque areas only)
-- GIF Library: exports auto-saved on this device (IndexedDB). Clearing Safari website data removes it.
+- **Video Key**: green-screen video → transparent GIF/PNG frames. Includes auto key detection, despill, custom backgrounds, and Standard/High/Max quality.
+- **Sticker Maker**: photo → AI background removal on your device (IMG.LY model, about 50 MB, downloaded once from a CDN), with a green/solid colour key fallback and an erase/restore brush. Add a white outline and drop shadow, then pick from 10 animation presets (Bounce, Wiggle, Spin, Pulse, Float, Shake, Pop-in, Jelly, Swing, Heartbeat).
+- **Library**: every export is saved in this browser (IndexedDB). Clearing Safari website data removes it, so use Save to Files for anything you want to keep.
+- Save to Photos / Copy / Save to Files / Share. Add to Home Screen for the app icon.
