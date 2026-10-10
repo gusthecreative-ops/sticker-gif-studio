@@ -244,7 +244,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
               <h2>Drop in a green-screen video</h2>
               <p>MP4, MOV, or WebM. Best results come from an evenly lit solid green background and clear gaps around hands/arms.</p>
               <div class="primary-btn file-btn" id="chooseBtn">Choose video<input id="fileInput" class="file-overlay" type="file" accept="video/*" aria-label="Choose video" /></div>
-              <div class="build-tag">build 261010-1635</div>
+              <div class="build-tag">build 261010-1639</div>
                 <div class="load-status" id="loadStatus"></div>
             </div>
           </div>
@@ -412,7 +412,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
           <p class="small-note">Large GIFs (1920×1080 / 1080×1920) can be slow to encode on phones. 960×540 (landscape) or 540×960 (vertical) are much lighter for GIPHY uploads.</p>
         </section>
         <section class="section" data-tool="export">
-          <div class="section-title"><h3>Export</h3><span>loop forever</span></div>
+          <div class="section-title"><h3>Output &amp; export</h3><span>loop forever</span></div>
           <div class="export-top export-grid">
             <button class="primary-btn" id="exportGif" disabled>Export transparent GIF</button>
             <button class="secondary-btn" id="exportPngZip" disabled>Export transparent PNG frames (.zip)</button>
@@ -469,7 +469,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     ${Ki()}
     ${mr()}
     ${Wr()}
-    <nav class="toolbar" id="toolbar"><button class="tool-btn" data-tool="source"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg><span>Source</span></button><button class="tool-btn" data-tool="key"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg><span>Key</span></button><button class="tool-btn" data-tool="look"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/></svg><span>Look</span></button><button class="tool-btn" data-tool="size"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10v4M17 10v4"/></svg><span>Frame</span></button><button class="tool-btn" data-tool="export"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M5 20h14"/></svg><span>Export</span></button><button class="tool-btn" data-tool="library" id="libraryBtn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Library</span></button></nav>
+    <nav class="toolbar" id="toolbar"><button class="tool-btn" data-tool="source"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg><span>Source</span></button><button class="tool-btn" data-tool="key"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg><span>Key</span></button><button class="tool-btn" data-tool="look"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/></svg><span>Look</span></button><button class="tool-btn" data-tool="size"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10v4M17 10v4"/></svg><span>Frame</span></button><button class="tool-btn" data-tool="export"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M5 20h14"/></svg><span>Output</span></button></nav>
     <div class="export-overlay" id="exportOverlay" hidden role="dialog" aria-modal="true" aria-label="Exporting GIF">
       <div class="xo-card">
         <div class="xo-busy" id="xoBusy">
@@ -490,7 +490,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   <div class="lib-overlay" id="libraryView" hidden>
     <header class="lib-head">
       <button class="lib-back" id="libClose" aria-label="Close library">‹ Back</button>
-      <h2>Library <small class="build-tag">build 261010-1635</small></h2>
+      <h2>Library <small class="build-tag">build 261010-1639</small></h2>
       <span class="lib-usage" id="libUsage"></span>
     </header>
     <div class="lib-body">
